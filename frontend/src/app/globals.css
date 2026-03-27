@@ -255,3 +255,13 @@
   animation: captionBounce 2s ease-in-out infinite;
   animation-delay: var(--delay, 0s);
 }
+
+/* Processing view scan-line animation */
+@keyframes scanLine {
+  from { left: 0%; }
+  to { left: 100%; }
+}
+
+.animate-scan-line {
+  animation: scanLine 2.5s linear infinite;
+}
