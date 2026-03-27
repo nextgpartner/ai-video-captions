@@ -2,8 +2,10 @@
 
 import os
 import pathlib
+import shutil
 import tempfile
 import threading
+import time
 import uuid
 
 from flask import Flask, jsonify, request, send_file
@@ -39,12 +41,14 @@ def create_app(testing: bool = False) -> Flask:
     # ------------------------------------------------------------------
     max_file_size_mb = int(os.environ.get("MAX_FILE_SIZE_MB", "500"))
     max_concurrent = int(os.environ.get("MAX_CONCURRENT_JOBS", "4"))
-    frontend_url = os.environ.get("FRONTEND_URL", "*")
+    max_duration_minutes = int(os.environ.get("MAX_DURATION_MINUTES", "30"))
+    frontend_url = os.environ.get("FRONTEND_URL", "http://localhost:3000")
 
     app.config["TESTING"] = testing
     app.config["MAX_CONTENT_LENGTH"] = max_file_size_mb * 1024 * 1024
     app.config["MAX_FILE_SIZE_BYTES"] = max_file_size_mb * 1024 * 1024
     app.config["MAX_CONCURRENT"] = max_concurrent
+    app.config["MAX_DURATION_MINUTES"] = max_duration_minutes
 
     if testing:
         data_dir = tempfile.mkdtemp()
@@ -56,6 +60,13 @@ def create_app(testing: bool = False) -> Flask:
 
     app.config["STORAGE"] = storage
     app.config["DATA_DIR"] = data_dir
+
+    # ------------------------------------------------------------------
+    # Output TTL cleanup
+    # ------------------------------------------------------------------
+    if not testing:
+        ttl_hours = int(os.environ.get("OUTPUT_TTL_HOURS", "24"))
+        _schedule_cleanup(app, ttl_hours)
 
     # ------------------------------------------------------------------
     # CORS
@@ -75,6 +86,7 @@ def create_app(testing: bool = False) -> Flask:
         storage: JobStorage = app.config["STORAGE"]
         data_dir: str = app.config["DATA_DIR"]
         max_file_size_bytes: int = app.config["MAX_FILE_SIZE_BYTES"]
+        _max_duration_minutes: int = app.config["MAX_DURATION_MINUTES"]
 
         # --- Enforce concurrent job limit ---
         if storage.active_job_count() >= app.config["MAX_CONCURRENT"]:
@@ -113,6 +125,16 @@ def create_app(testing: bool = False) -> Flask:
                     f"and {CAPTION_POSITION_MAX}"
                 )
             }), 400
+
+        # --- Validate durationSeconds (client-provided, from HTML5 video element) ---
+        duration_seconds_str = request.form.get("durationSeconds")
+        if duration_seconds_str:
+            try:
+                duration_seconds = float(duration_seconds_str)
+                if duration_seconds > _max_duration_minutes * 60:
+                    return jsonify({"error": f"Video too long. Maximum: {_max_duration_minutes} minutes"}), 400
+            except ValueError:
+                pass  # If unparseable, let it through — backend will determine during processing
 
         # --- Read file content and check size ---
         file_bytes = file.read()
@@ -211,6 +233,38 @@ def create_app(testing: bool = False) -> Flask:
         return jsonify({"deleted": True})
 
     return app
+
+
+def _cleanup_old_outputs(data_dir: str, storage: JobStorage, ttl_hours: int) -> None:
+    """Delete output directories (and their job records) older than ttl_hours."""
+    output_dir = os.path.join(data_dir, "output")
+    if not os.path.exists(output_dir):
+        return
+
+    cutoff = time.time() - (ttl_hours * 3600)
+    for job_id in os.listdir(output_dir):
+        job_path = os.path.join(output_dir, job_id)
+        if os.path.isdir(job_path):
+            mtime = os.path.getmtime(job_path)
+            if mtime < cutoff:
+                shutil.rmtree(job_path, ignore_errors=True)
+                storage.delete_job(job_id)
+
+
+def _schedule_cleanup(app: Flask, ttl_hours: int, interval_seconds: int = 3600) -> None:
+    """Run _cleanup_old_outputs immediately and then every interval_seconds in a daemon thread."""
+    def run():
+        while True:
+            with app.app_context():
+                _cleanup_old_outputs(
+                    app.config["DATA_DIR"],
+                    app.config["STORAGE"],
+                    ttl_hours,
+                )
+            time.sleep(interval_seconds)
+
+    thread = threading.Thread(target=run, daemon=True)
+    thread.start()
 
 
 def _start_processing_thread(app: Flask, job_id: str) -> None:

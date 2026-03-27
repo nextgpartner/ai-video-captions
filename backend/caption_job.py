@@ -13,6 +13,7 @@ import logging
 import os
 import shutil
 import subprocess
+import time
 
 logger = logging.getLogger(__name__)
 
@@ -193,6 +194,8 @@ def process_caption_job(
     output_dir = os.path.join(data_dir, "output", job_id)
     output_path = os.path.join(output_dir, "captioned.mp4")
 
+    start_time = time.time()
+
     try:
         # ------------------------------------------------------------------
         # Phase 1: probe
@@ -246,7 +249,13 @@ def process_caption_job(
         if os.path.isdir(temp_job_dir):
             shutil.rmtree(temp_job_dir, ignore_errors=True)
 
-        storage.update_status(job_id, status="completed", progress=100, output_path=output_path)
+        storage.update_status(
+            job_id,
+            status="completed",
+            progress=100,
+            output_path=output_path,
+            processing_time_ms=int((time.time() - start_time) * 1000),
+        )
 
     except Exception as exc:  # noqa: BLE001
         logger.exception("Job %s failed: %s", job_id, exc)
