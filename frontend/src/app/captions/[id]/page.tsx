@@ -2,6 +2,8 @@ import { notFound } from "next/navigation";
 import { getCaptionJobById } from "~/actions/captions";
 import { CaptionResultViewer } from "~/components/caption-result-viewer";
 
+export const dynamic = "force-dynamic";
+
 interface CaptionPageProps {
   params: Promise<{ id: string }>;
 }

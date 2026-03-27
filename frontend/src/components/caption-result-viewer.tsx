@@ -145,19 +145,16 @@ export function CaptionResultViewer({ job }: CaptionResultViewerProps) {
             )}
 
             <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <button
-                  type="button"
-                  disabled={isDeleting}
-                  className="flex items-center gap-1.5 rounded-lg border border-red-300 px-3 py-1.5 text-sm font-medium text-red-500 transition-colors hover:bg-red-50 disabled:opacity-50 dark:border-red-700 dark:hover:bg-red-950"
-                >
-                  {isDeleting ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Trash2 className="h-4 w-4" />
-                  )}
-                  Delete
-                </button>
+              <AlertDialogTrigger
+                disabled={isDeleting}
+                className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-red-300 px-3 py-1.5 text-sm font-medium text-red-500 transition-colors hover:bg-red-50 disabled:opacity-50 dark:border-red-700 dark:hover:bg-red-950"
+              >
+                {isDeleting ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Trash2 className="h-4 w-4" />
+                )}
+                Delete
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>

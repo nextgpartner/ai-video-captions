@@ -3,6 +3,8 @@ import { Film } from "lucide-react";
 import { getCaptionJobs } from "~/actions/captions";
 import { CaptionJobCard } from "~/components/caption-job-card";
 
+export const dynamic = "force-dynamic";
+
 export default async function HistoryPage() {
   const jobs = await getCaptionJobs();
 
