@@ -5,7 +5,7 @@
   "description": "Free, open-source AI video caption generator",
   "scripts": {
     "setup": "cd backend && python3 -m venv .venv && .venv/bin/pip install -r requirements.txt && cd ../frontend && npm install && DATABASE_URL=file:./data/captions.db npx prisma generate && DATABASE_URL=file:./data/captions.db npx prisma db push",
-    "dev": "concurrently -n backend,frontend -c blue,green \"cd backend && source .venv/bin/activate && python app.py\" \"cd frontend && DATABASE_URL=file:./data/captions.db npm run dev\"",
+    "dev": "make dev",
     "dev:backend": "cd backend && source .venv/bin/activate && python app.py",
     "dev:frontend": "cd frontend && DATABASE_URL=file:./data/captions.db npm run dev",
     "dev:docker": "docker compose -f docker-compose.dev.yml up --build",
@@ -16,8 +16,5 @@
     "lint": "cd frontend && npm run lint",
     "build": "cd frontend && npm run build",
     "clean": "rm -rf backend/data/temp/* backend/data/output/* frontend/.next"
-  },
-  "devDependencies": {
-    "concurrently": "^9.1.2"
   }
 }
