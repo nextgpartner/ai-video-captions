@@ -113,15 +113,16 @@ def generate_ass_from_transcript(
 ) -> bool:
     """Generate an ASS subtitle file from a transcript dict.
 
-    This is a thin wrapper around ``subtitles.generate_ass()`` (Task 7).
+    This is a thin wrapper around ``subtitles.generate_ass()``.
     Returns True on success.
     """
-    import subtitles  # type: ignore[import]  # implemented in Task 7
+    import subtitles
 
     return subtitles.generate_ass(
-        transcript=transcript,
-        duration=duration,
-        output_path=output_path,
+        transcript,
+        0,
+        duration,
+        output_path,
         caption_style=caption_style,
         caption_position=caption_position,
         language=language,
