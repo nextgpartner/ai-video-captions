@@ -76,6 +76,10 @@ def create_app(testing: bool = False) -> Flask:
         data_dir: str = app.config["DATA_DIR"]
         max_file_size_bytes: int = app.config["MAX_FILE_SIZE_BYTES"]
 
+        # --- Enforce concurrent job limit ---
+        if storage.active_job_count() >= app.config["MAX_CONCURRENT"]:
+            return jsonify({"error": "Too many concurrent jobs. Please wait."}), 429
+
         # --- Validate file presence ---
         if "file" not in request.files:
             return jsonify({"error": "No file provided"}), 400
@@ -177,8 +181,12 @@ def create_app(testing: bool = False) -> Flask:
         if job["status"] != "completed":
             return jsonify({"error": "Job not completed yet"}), 409
 
+        data_dir: str = app.config["DATA_DIR"]
         output_path = job.get("output_path")
         if not output_path or not os.path.isfile(output_path):
+            # Fallback: construct from convention
+            output_path = os.path.join(data_dir, "output", job_id, "captioned.mp4")
+        if not os.path.isfile(output_path):
             return jsonify({"error": "Output file not found"}), 404
 
         return send_file(output_path, as_attachment=True)
@@ -210,11 +218,22 @@ def _start_processing_thread(app: Flask, job_id: str) -> None:
     def run():
         with app.app_context():
             storage: JobStorage = app.config["STORAGE"]
-            storage.update_status(job_id, status="processing", phase="starting")
+            data_dir: str = app.config["DATA_DIR"]
+            job = storage.get_job(job_id)
+            if job is None:
+                return
             try:
                 # Import here to avoid heavy deps at startup
-                from processor import process_job  # type: ignore[import]
-                process_job(app, job_id)
+                from caption_job import process_caption_job
+
+                process_caption_job(
+                    storage,
+                    job_id,
+                    job["video_path"],
+                    job["caption_style"],
+                    job["caption_position"],
+                    data_dir,
+                )
             except Exception as exc:  # noqa: BLE001
                 storage.update_status(job_id, status="failed", error=str(exc))
 

@@ -1,5 +1,6 @@
 """Tests for Flask API endpoints."""
 import io
+import os
 import pytest
 
 def test_health_endpoint(client):
@@ -76,3 +77,51 @@ def test_download_not_completed(client):
     job_id = submit_response.get_json()["jobId"]
     response = client.get(f"/api/download/{job_id}")
     assert response.status_code == 409
+
+def test_download_completed_with_output_path(app, client):
+    """Download succeeds when output_path is stored and file exists."""
+    storage = app.config["STORAGE"]
+    data_dir = app.config["DATA_DIR"]
+    # Submit a job
+    form = {"file": (io.BytesIO(b"\x00" * 100), "test.mp4"), "captionStyle": "hormozi", "captionPosition": "10"}
+    submit_response = client.post("/api/process", data=form, content_type="multipart/form-data")
+    job_id = submit_response.get_json()["jobId"]
+    # Simulate completion: create output file and set output_path
+    output_dir = os.path.join(data_dir, "output", job_id)
+    os.makedirs(output_dir, exist_ok=True)
+    output_file = os.path.join(output_dir, "captioned.mp4")
+    with open(output_file, "wb") as f:
+        f.write(b"\x00\x00\x00\x1cftypisom")  # minimal mp4 header bytes
+    storage.update_status(job_id, status="completed", progress=100, output_path=output_file)
+    response = client.get(f"/api/download/{job_id}")
+    assert response.status_code == 200
+
+def test_download_completed_fallback_path(app, client):
+    """Download uses fallback path when output_path not stored but file exists at convention path."""
+    storage = app.config["STORAGE"]
+    data_dir = app.config["DATA_DIR"]
+    form = {"file": (io.BytesIO(b"\x00" * 100), "test.mp4"), "captionStyle": "hormozi", "captionPosition": "10"}
+    submit_response = client.post("/api/process", data=form, content_type="multipart/form-data")
+    job_id = submit_response.get_json()["jobId"]
+    # Create the output file at the convention path but do NOT set output_path
+    output_dir = os.path.join(data_dir, "output", job_id)
+    os.makedirs(output_dir, exist_ok=True)
+    with open(os.path.join(output_dir, "captioned.mp4"), "wb") as f:
+        f.write(b"\x00\x00\x00\x1cftypisom")
+    storage.update_status(job_id, status="completed", progress=100)
+    response = client.get(f"/api/download/{job_id}")
+    assert response.status_code == 200
+
+def test_concurrent_job_limit(app, client):
+    """Returns 429 when MAX_CONCURRENT_JOBS is reached."""
+    app.config["MAX_CONCURRENT"] = 2
+    # Submit 2 jobs to fill the limit
+    for _ in range(2):
+        form = {"file": (io.BytesIO(b"\x00" * 100), "test.mp4"), "captionStyle": "hormozi", "captionPosition": "10"}
+        resp = client.post("/api/process", data=form, content_type="multipart/form-data")
+        assert resp.status_code == 200
+    # Third job should be rejected
+    form = {"file": (io.BytesIO(b"\x00" * 100), "test.mp4"), "captionStyle": "hormozi", "captionPosition": "10"}
+    response = client.post("/api/process", data=form, content_type="multipart/form-data")
+    assert response.status_code == 429
+    assert "concurrent" in response.get_json()["error"].lower()

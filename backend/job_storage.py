@@ -58,6 +58,7 @@ class JobStorage:
             "language": None,
             "duration_seconds": None,
             "error_message": None,
+            "output_path": None,
             "created_at": now,
             "updated_at": now,
         }
@@ -82,6 +83,7 @@ class JobStorage:
         language: Optional[str] = None,
         duration: Optional[float] = None,
         error: Optional[str] = None,
+        output_path: Optional[str] = None,
     ) -> bool:
         """Update job fields. Only provided (non-None) values are written.
 
@@ -103,6 +105,8 @@ class JobStorage:
                 job["duration_seconds"] = duration
             if error is not None:
                 job["error_message"] = error
+            if output_path is not None:
+                job["output_path"] = output_path
             job["updated_at"] = _now_iso()
             self._persist()
         return True

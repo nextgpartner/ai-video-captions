@@ -246,7 +246,7 @@ def process_caption_job(
         if os.path.isdir(temp_job_dir):
             shutil.rmtree(temp_job_dir, ignore_errors=True)
 
-        storage.update_status(job_id, status="completed", progress=100)
+        storage.update_status(job_id, status="completed", progress=100, output_path=output_path)
 
     except Exception as exc:  # noqa: BLE001
         logger.exception("Job %s failed: %s", job_id, exc)

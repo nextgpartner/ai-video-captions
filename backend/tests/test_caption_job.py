@@ -49,6 +49,8 @@ def test_process_updates_status_to_completed(storage, temp_dir):
     assert job["progress"] == 100
     assert job["language"] == "en"
     assert job["duration_seconds"] == 5.0
+    assert job["output_path"] is not None
+    assert job["output_path"].endswith("captioned.mp4")
 
 def test_process_handles_error(storage, temp_dir):
     from caption_job import process_caption_job
