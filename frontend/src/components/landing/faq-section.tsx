@@ -80,6 +80,7 @@ export function FAQSection() {
                 onClick={() =>
                   setOpenIndex(openIndex === index ? null : index)
                 }
+                aria-expanded={openIndex === index}
                 className="flex w-full cursor-pointer items-start justify-between gap-4 text-left"
               >
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white">

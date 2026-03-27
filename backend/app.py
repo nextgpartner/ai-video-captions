@@ -40,7 +40,7 @@ def create_app(testing: bool = False) -> Flask:
     # Configuration
     # ------------------------------------------------------------------
     max_file_size_mb = int(os.environ.get("MAX_FILE_SIZE_MB", "500"))
-    max_concurrent = int(os.environ.get("MAX_CONCURRENT_JOBS", "4"))
+    max_concurrent = int(os.environ.get("MAX_CONCURRENT_JOBS", "2"))
     max_duration_minutes = int(os.environ.get("MAX_DURATION_MINUTES", "30"))
     frontend_url = os.environ.get("FRONTEND_URL", "http://localhost:3000")
 

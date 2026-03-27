@@ -1,7 +1,7 @@
 "use client";
 
 import { Fragment } from "react";
-import { Upload, Palette, Download, Mic, Scissors, Flame } from "lucide-react";
+import { Upload, Palette, Download, Mic, Flame } from "lucide-react";
 import { useIntersectionObserver } from "~/hooks/use-intersection-observer";
 
 const steps = [
