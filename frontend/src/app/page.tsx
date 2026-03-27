@@ -1,7 +1,17 @@
+import { HeroSection } from "~/components/landing/hero-section";
+import { FeaturesSection } from "~/components/landing/features-section";
+import { HowItWorksSection } from "~/components/landing/how-it-works-section";
+import { FAQSection } from "~/components/landing/faq-section";
+import { OpenSourceSection } from "~/components/landing/open-source-section";
+
 export default function HomePage() {
   return (
-    <div className="flex min-h-screen items-center justify-center">
-      <h1 className="text-4xl font-bold">AI Video Captions</h1>
-    </div>
+    <>
+      <HeroSection />
+      <FeaturesSection />
+      <HowItWorksSection />
+      <FAQSection />
+      <OpenSourceSection />
+    </>
   );
 }
