@@ -2,7 +2,11 @@
   <h1 align="center">AI Video Captions</h1>
   <p align="center">
     Free, open-source AI video caption generator.<br/>
-    Upload a video, pick a style, download with word-by-word animated subtitles burned in.
+    Add trending animated subtitles to any video — 6 styles, word-level animation, 100+ languages.<br/>
+    Self-hosted with Docker. No accounts, no limits.
+  </p>
+  <p align="center">
+    <a href="https://www.autoshorts.app/en/tools/ai-caption-generator"><strong>Try the hosted version</strong></a>
   </p>
 </p>
 
@@ -13,7 +17,7 @@
 </p>
 
 <p align="center">
-  <img src="docs/screenshots/home-upload.png" alt="AI Video Captions — Upload and style picker" width="720">
+  <img src="docs/screenshots/home-upload.png" alt="AI Video Caption Generator — Upload video, choose caption style, and preview animated subtitles" width="720">
 </p>
 
 ## What It Does
@@ -31,11 +35,11 @@ No accounts. No tracking. No limits. Self-hosted and 100% free.
 
 | Upload & Style Picker | Processing Pipeline |
 |:---:|:---:|
-| ![Upload](docs/screenshots/home-upload.png) | ![Processing](docs/screenshots/processing.png) |
+| ![AI caption generator upload interface with 6 subtitle styles](docs/screenshots/home-upload.png) | ![Video caption processing pipeline with progress tracking](docs/screenshots/processing.png) |
 
 | Result Viewer | Caption History |
 |:---:|:---:|
-| ![Result](docs/screenshots/result-viewer.png) | ![History](docs/screenshots/caption-history.png) |
+| ![Captioned video player with word-level animated subtitles](docs/screenshots/result-viewer.png) | ![Caption history showing completed and failed subtitle jobs](docs/screenshots/caption-history.png) |
 
 ## Features
 
@@ -160,3 +164,5 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for full development setup and guidelines
 ---
 
 Built by [@nicolaigaina](https://github.com/nicolaigaina) — creator of [AutoShorts](https://autoshorts.app), AI-powered video repurposing for content creators.
+
+[Try AI Video Captions online](https://www.autoshorts.app/en/tools/ai-caption-generator) — no installation required.
