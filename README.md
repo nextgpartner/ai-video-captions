@@ -1,23 +1,56 @@
-# AI Video Captions
+<p align="center">
+  <h1 align="center">AI Video Captions</h1>
+  <p align="center">
+    Free, open-source AI video caption generator.<br/>
+    Upload a video, pick a style, download with word-by-word animated subtitles burned in.
+  </p>
+</p>
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Docker](https://img.shields.io/badge/Docker-Ready-blue.svg)](docker-compose.yml)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
+<p align="center">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT"></a>
+  <a href="docker-compose.yml"><img src="https://img.shields.io/badge/Docker-Ready-blue.svg" alt="Docker"></a>
+  <a href="CONTRIBUTING.md"><img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg" alt="PRs Welcome"></a>
+</p>
 
-**Free, open-source AI video caption generator.** Upload a video, pick from 6 trending caption styles, and download your video with word-by-word animated subtitles burned in.
+<p align="center">
+  <img src="docs/screenshots/home-upload.png" alt="AI Video Captions — Upload and style picker" width="720">
+</p>
 
-Self-hosted with Docker. No accounts, no tracking, no limits.
+## What It Does
+
+Drop in any video and AI Video Captions will:
+
+1. **Transcribe** it using faster-whisper with word-level timestamps
+2. **Generate** animated ASS subtitles in the style you chose
+3. **Burn** captions directly into the video with FFmpeg
+4. **Deliver** a ready-to-post captioned video in full HD
+
+No accounts. No tracking. No limits. Self-hosted and 100% free.
+
+## Screenshots
+
+| Upload & Style Picker | Processing Pipeline |
+|:---:|:---:|
+| ![Upload](docs/screenshots/home-upload.png) | ![Processing](docs/screenshots/processing.png) |
+
+| Result Viewer | Caption History |
+|:---:|:---:|
+| ![Result](docs/screenshots/result-viewer.png) | ![History](docs/screenshots/caption-history.png) |
 
 ## Features
 
-- **AI Transcription** — Powered by faster-whisper with word-level timestamps
-- **6 Caption Styles** — Hormozi, MrBeast, Karaoke, Minimal, Bounce, Classic
+- **6 Trending Caption Styles** — Hormozi, MrBeast, Karaoke, Minimal, Bounce, Classic — inspired by top-performing short-form content on TikTok, Reels, and Shorts
 - **Word-Level Animation** — Each word animates individually with highlights, wipes, bounces, and scale effects
-- **100+ Languages** — Automatic language detection with script-aware font selection
-- **Self-Hosted** — Run on your own infrastructure with Docker Compose
-- **HD Export** — Download captioned videos in full quality (CRF 18, audio preserved)
+- **100+ Languages** — Automatic language detection with script-aware font fallback (Latin, CJK, Arabic, Devanagari, and more)
+- **Live Preview** — See your chosen caption style on a phone mockup before processing
+- **Adjustable Position** — Drag captions to the exact vertical position you want
+- **HD Export** — CRF 18 quality with original audio preserved
+- **Job History** — Browse all your captioned videos with status and metadata
+- **4-Step Pipeline** — Visual progress tracking: Upload → Transcribe → Burn → Finalize
 
 ## Quick Start
+
+### Docker (recommended)
 
 ```bash
 git clone https://github.com/nicolaigaina/ai-video-captions.git
@@ -25,77 +58,105 @@ cd ai-video-captions
 docker compose up
 ```
 
-Open [http://localhost:3000](http://localhost:3000) and start adding captions to your videos.
+Open [http://localhost:3000](http://localhost:3000) and start adding captions.
+
+### Local Development
+
+**Prerequisites:** Python 3.11+, Node.js 20+, FFmpeg
+
+```bash
+# One-time setup
+make setup
+
+# Start both servers
+make dev
+```
+
+Frontend runs on [localhost:3000](http://localhost:3000), backend on [localhost:5000](http://localhost:5000).
 
 ## Architecture
 
 ```
 ai-video-captions/
-├── frontend/          Next.js 16 (React 19, Tailwind, shadcn/ui)
-│   ├── src/app/       Pages: landing, history, result viewer
-│   ├── src/components/ UI: dropzone, style picker, phone preview
-│   ├── src/actions/   Server actions (proxy to backend)
-│   └── prisma/        SQLite schema (job metadata)
+├── frontend/             Next.js 16 (React 19, Tailwind CSS v4, shadcn/ui)
+│   ├── src/app/          Pages: landing, history, result viewer
+│   ├── src/components/   UI: dropzone, style picker, phone preview
+│   ├── src/actions/      Server actions (proxy to backend API)
+│   └── prisma/           SQLite schema for job metadata
 │
-├── backend/           Flask + faster-whisper + FFmpeg
-│   ├── app.py         API endpoints
-│   ├── caption_job.py Processing pipeline
-│   ├── subtitles.py   ASS subtitle generation
-│   └── caption_styles.py Style configuration
+├── backend/              Flask + faster-whisper + FFmpeg
+│   ├── app.py            REST API endpoints
+│   ├── caption_job.py    Processing pipeline (transcribe → subtitle → burn)
+│   ├── subtitles.py      ASS subtitle generation with animations
+│   └── caption_styles.py Style definitions (shared JSON config)
 │
-└── docker-compose.yml Production deployment
+├── docker-compose.yml    Production deployment
+├── docker-compose.dev.yml  Development with hot reload
+└── Makefile              Dev commands
 ```
+
+**How it works:**
+
+1. The Next.js frontend uploads the video to the Flask backend via `/api/process`
+2. The backend queues a job and begins processing in a background thread
+3. faster-whisper transcribes the audio with word-level timestamps
+4. pysubs2 generates styled ASS subtitles with per-word animations
+5. FFmpeg burns the subtitles into the video at the chosen position
+6. The frontend polls `/api/status/{jobId}` and shows real-time progress
+7. Once complete, the user previews and downloads the captioned video
 
 ## Configuration
 
+Copy `.env.example` to `.env` and adjust as needed:
+
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `MAX_FILE_SIZE_MB` | 500 | Maximum upload file size |
-| `MAX_DURATION_MINUTES` | 30 | Maximum video duration |
-| `WHISPER_MODEL_SIZE` | base | Whisper model (tiny/base/small/medium/large) |
-| `OUTPUT_TTL_HOURS` | 24 | Hours to keep output files |
-| `MAX_CONCURRENT_JOBS` | 2 | Maximum simultaneous jobs |
+| `WHISPER_MODEL_SIZE` | `base` | Whisper model: `tiny`, `base`, `small`, `medium`, `large-v3` |
+| `MAX_FILE_SIZE_MB` | `500` | Maximum upload file size in MB |
+| `MAX_DURATION_MINUTES` | `30` | Maximum video duration |
+| `MAX_CONCURRENT_JOBS` | `2` | Simultaneous processing jobs |
+| `OUTPUT_TTL_HOURS` | `24` | Hours to keep output files before cleanup |
+
+Larger whisper models produce better transcriptions but require more RAM and processing time. `base` is a good default for most use cases.
 
 ## Tech Stack
 
-| Component | Technology |
-|-----------|-----------|
-| Frontend | Next.js 16, React 19, TypeScript, Tailwind CSS v4, shadcn/ui |
-| Backend | Python, Flask, faster-whisper, pysubs2, FFmpeg |
-| Database | SQLite (via Prisma) |
+| Layer | Technology |
+|-------|-----------|
+| Frontend | [Next.js 16](https://nextjs.org/), [React 19](https://react.dev/), TypeScript, [Tailwind CSS v4](https://tailwindcss.com/), [shadcn/ui](https://ui.shadcn.com/) |
+| Backend | Python 3.11+, [Flask](https://flask.palletsprojects.com/), [faster-whisper](https://github.com/SYSTRAN/faster-whisper), [pysubs2](https://github.com/tkarabela/pysubs2) |
+| Video | [FFmpeg](https://ffmpeg.org/) (subtitle burn-in, encoding) |
+| Database | SQLite via [Prisma](https://www.prisma.io/) |
 | Deployment | Docker Compose |
+
+## API
+
+Full API documentation is available in [docs/API.md](docs/API.md).
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/health` | Health check |
+| `POST` | `/api/process` | Upload video and start captioning |
+| `GET` | `/api/status/{jobId}` | Poll job progress |
+| `GET` | `/api/download/{jobId}` | Download captioned video |
+| `DELETE` | `/api/jobs/{jobId}` | Delete a job and its files |
 
 ## Development
 
 ```bash
-# Backend only
-cd backend
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-python app.py
-
-# Frontend only
-cd frontend
-npm install
-npm run dev
-
-# Both with Docker (hot reload)
-docker compose -f docker-compose.dev.yml up
+make dev              # Start frontend + backend
+make dev-docker       # Start with Docker (hot reload)
+make test             # Run backend tests
+make lint             # Lint frontend + backend
+make clean            # Remove build artifacts and temp files
 ```
 
-## API Documentation
-
-See [docs/API.md](docs/API.md) for backend endpoint documentation.
-
-## Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and guidelines.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for full development setup and guidelines.
 
 ## License
 
-MIT License — see [LICENSE](LICENSE) for details.
+[MIT](LICENSE)
 
 ---
 
-Built by the team behind [AutoShorts](https://autoshorts.app) — AI-powered video repurposing for content creators.
+Built by [@nicolaigaina](https://github.com/nicolaigaina) — creator of [AutoShorts](https://autoshorts.app), AI-powered video repurposing for content creators.
