@@ -163,12 +163,6 @@ def create_app(testing: bool = False) -> Flask:
             file_size=file_size,
         )
 
-        # --- Update video_path directly (job was just created with the path) ---
-        # The path is already correct from create_job, but update it to the
-        # actual on-disk path if needed.
-        with storage._lock:
-            storage._jobs[job_id]["video_path"] = video_path
-
         # --- Start background processing (skipped in test mode) ---
         if not testing:
             _start_processing_thread(app, job_id)
@@ -189,6 +183,7 @@ def create_app(testing: bool = False) -> Flask:
             "language": job["language"],
             "durationSeconds": job["duration_seconds"],
             "errorMessage": job["error_message"],
+            "processingTimeMs": job.get("processing_time_ms"),
             "createdAt": job["created_at"],
             "updatedAt": job["updated_at"],
         })

@@ -59,4 +59,5 @@ export interface BackendStatusResponse {
   language: string | null;
   durationSeconds: number | null;
   errorMessage: string | null;
+  processingTimeMs: number | null;
 }

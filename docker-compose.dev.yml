@@ -25,6 +25,7 @@ services:
     volumes:
       - ./frontend/src:/app/src
       - ./frontend/public:/app/public
+      - sqlite-data:/app/data
     environment:
       - BACKEND_URL=http://backend:5000
       - NEXT_PUBLIC_BACKEND_URL=http://localhost:5000
@@ -35,3 +36,4 @@ services:
 
 volumes:
   caption-data:
+  sqlite-data:

@@ -69,6 +69,9 @@ export async function submitCaptionJob(
     backendFormData.append("file", file);
     backendFormData.append("captionStyle", captionStyle);
     backendFormData.append("captionPosition", captionPosition);
+    if (durationSeconds) {
+      backendFormData.append("durationSeconds", durationSeconds);
+    }
 
     const response = await fetch(`${env.BACKEND_URL}/api/process`, {
       method: "POST",
@@ -135,6 +138,7 @@ export async function getCaptionJobStatus(
         language: backendData.language,
         durationSeconds: backendData.durationSeconds ?? job.durationSeconds,
         errorMessage: backendData.errorMessage,
+        processingTimeMs: backendData.processingTimeMs,
       },
     });
 
