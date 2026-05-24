@@ -10,15 +10,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Pobierz Google Fonts używane przez style napisów
 RUN mkdir -p /usr/share/fonts/truetype/captions && \
     wget -q "https://raw.githubusercontent.com/google/fonts/main/ofl/anton/Anton-Regular.ttf" \
-        -O /usr/share/fonts/truetype/captions/Anton-Regular.ttf && \
+        -O /usr/share/fonts/truetype/captions/Anton-Regular.ttf || true && \
     wget -q "https://raw.githubusercontent.com/google/fonts/main/ofl/bangers/Bangers-Regular.ttf" \
-        -O /usr/share/fonts/truetype/captions/Bangers-Regular.ttf && \
+        -O /usr/share/fonts/truetype/captions/Bangers-Regular.ttf || true && \
     wget -q "https://raw.githubusercontent.com/google/fonts/main/ofl/montserrat/static/Montserrat-Bold.ttf" \
-        -O /usr/share/fonts/truetype/captions/Montserrat-Bold.ttf && \
+        -O /usr/share/fonts/truetype/captions/Montserrat-Bold.ttf || true && \
     wget -q "https://raw.githubusercontent.com/google/fonts/main/ofl/bebasneuenew/BebasNeue-Regular.ttf" \
-        -O /usr/share/fonts/truetype/captions/BebasNeue-Regular.ttf && \
+        -O /usr/share/fonts/truetype/captions/BebasNeue-Regular.ttf || true && \
     wget -q "https://raw.githubusercontent.com/google/fonts/main/ofl/ibmplexsans/IBMPlexSans-Bold.ttf" \
-        -O /usr/share/fonts/truetype/captions/IBMPlexSans-Bold.ttf && \
+        -O /usr/share/fonts/truetype/captions/IBMPlexSans-Bold.ttf || true && \
     fc-cache -fv
 
 WORKDIR /app
