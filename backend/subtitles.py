@@ -94,6 +94,17 @@ def generate_ass(
     if not clip_segments:
         return False
 
+    # Scal samodzielne tokeny interpunkcyjne z poprzednim słowem
+    # (Whisper często zwraca "," jako osobny token → "SŁOWO , NASTĘPNE")
+    merged: list[dict] = []
+    for seg in clip_segments:
+        word = seg["word"]
+        if word in {",", ".", "!", "?", ";", ":", "...", "…", ")", "]"} and merged:
+            merged[-1] = {**merged[-1], "word": merged[-1]["word"] + word, "end": seg["end"]}
+        else:
+            merged.append(seg)
+    clip_segments = merged
+
     # ------------------------------------------------------------------
     # Character-based grouping with multi-line support
     # ------------------------------------------------------------------
