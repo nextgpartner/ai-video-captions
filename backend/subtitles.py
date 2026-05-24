@@ -229,81 +229,82 @@ def generate_ass(
     highlight_color = style_config.highlight_color
     animation_type = style_config.animation_type
 
-    # ------------------------------------------------------------------
+# ------------------------------------------------------------------
     # Generate per-word subtitle events
+    # Każda linia to osobny SSAEvent z absolutnym pozycjonowaniem Y
+    # — daje pełną kontrolę nad odstępem między liniami.
     # ------------------------------------------------------------------
+    scaled_font_size = int(style_config.font_size * font_scale * dimension_scale)
+    line_height = int(scaled_font_size * 1.1)   # ciaśniejszy leading niż domyślny \N
+    center_x = play_res_x // 2
+    base_y = play_res_y - new_style.marginv      # Y dolnej linii
+
     for _, line_end, word_list in subtitles:
+        # Grupuj słowa wg linii, zachowując oryginalne indeksy
+        line_buckets: dict[int, list[tuple[int, str, float, float]]] = {}
+        for orig_idx, (w, ws, we, li) in enumerate(word_list):
+            line_buckets.setdefault(li, []).append((orig_idx, w, ws, we))
+
+        num_lines = len(line_buckets)
+
         for idx, (word, word_start, _, _) in enumerate(word_list):
-            # Event end = next word's start, or line end for last word
-            if idx < len(word_list) - 1:
-                event_end = word_list[idx + 1][1]
-            else:
-                event_end = line_end
+            # Koniec eventu = start następnego słowa lub koniec grupy
+            event_end = word_list[idx + 1][1] if idx < len(word_list) - 1 else line_end
 
-            # Build full-line text with animation tags for the current word
-            text_parts: list[str] = []
-            prev_line_idx = None
+            for line_idx, words_on_line in sorted(line_buckets.items()):
+                # Najniższa linia (największy line_idx) = base_y
+                # Każda linia wyżej przesuwa się o line_height w górę
+                lines_above = num_lines - 1 - line_idx
+                y_pos = base_y - lines_above * line_height
 
-            for i, (w, w_start, w_end, line_idx) in enumerate(word_list):
-                # Line break when moving to a new display line
-                if prev_line_idx is not None and line_idx != prev_line_idx:
-                    text_parts.append("\\N")
-
-                w_display = w.upper()
-                w_upper = escape_ass_text(w_display)
-
-                if i == idx:
-                    # Current word — apply style-specific highlight
-                    word_color = highlight_color
-
-                    if animation_type == "karaoke":
-                        if is_rtl_language(language):
-                            text_parts.append(f"{{\\c{word_color}}}{w_upper}{{\\r}}")
-                        else:
-                            duration_cs = (
-                                int((w_end - w_start) * 100) if w_end > w_start else 30
-                            )
+                text_parts: list[str] = []
+                for orig_i, w, ws, we in words_on_line:
+                    w_upper = escape_ass_text(w.upper())
+                    if orig_i == idx:
+                        if animation_type == "karaoke":
+                            if is_rtl_language(language):
+                                text_parts.append(f"{{\\c{highlight_color}}}{w_upper}{{\\r}}")
+                            else:
+                                dur = int((we - ws) * 100) if we > ws else 30
+                                text_parts.append(
+                                    f"{{\\kf{dur}\\c{highlight_color}}}{w_upper}{{\\r}}"
+                                )
+                        elif animation_type == "scale":
                             text_parts.append(
-                                f"{{\\kf{duration_cs}\\c{word_color}}}{w_upper}{{\\r}}"
+                                f"{{\\fscx110\\fscy110\\c{highlight_color}}}{w_upper}{{\\r}}"
                             )
-                    elif animation_type == "scale":
-                        text_parts.append(
-                            f"{{\\fscx110\\fscy110\\c{word_color}}}{w_upper}{{\\r}}"
-                        )
-                    elif animation_type == "bounce":
-                        bounce_pct = 120 if font_scale >= 1.0 else 112
-                        text_parts.append(
-                            f"{{\\t(0,50,\\fscx{bounce_pct}\\fscy{bounce_pct})"
-                            f"\\t(50,100,\\fscx100\\fscy100)"
-                            f"\\c{word_color}}}{w_upper}{{\\r}}"
-                        )
+                        elif animation_type == "bounce":
+                            bp = 120 if font_scale >= 1.0 else 112
+                            text_parts.append(
+                                f"{{\\t(0,50,\\fscx{bp}\\fscy{bp})"
+                                f"\\t(50,100,\\fscx100\\fscy100)"
+                                f"\\c{highlight_color}}}{w_upper}{{\\r}}"
+                            )
+                        else:  # highlight (domyślny)
+                            text_parts.append(f"{{\\c{highlight_color}}}{w_upper}{{\\r}}")
                     else:
-                        # Default highlight: simple colour change
-                        text_parts.append(f"{{\\c{word_color}}}{w_upper}{{\\r}}")
+                        text_parts.append(w_upper)
+
+                # Złącz słowa z opcjonalnym word_spacing
+                if style_config.word_spacing != 100:
+                    space = f"{{\\fscx{style_config.word_spacing}}} {{\\fscx100}}"
+                    text = space.join(text_parts)
                 else:
-                    # Not currently speaking — default style colour
-                    text_parts.append(w_upper)
+                    text = " ".join(text_parts)
 
-                prev_line_idx = line_idx
+                # Letter spacing
+                if style_config.letter_spacing != 0:
+                    text = f"{{\\fsp{style_config.letter_spacing}}}{text}"
 
-            # Join words with spacing
-            if style_config.word_spacing != 100:
-                space = f"{{\\fscx{style_config.word_spacing}}} {{\\fscx100}}"
-                text = space.join(text_parts)
-            else:
-                text = " ".join(text_parts)
+                # Absolutne pozycjonowanie — \an2 = kotwica bottom-center
+                text = f"{{\\an2\\pos({center_x},{y_pos})}}{text}"
 
-            # Apply letter spacing if non-zero
-            if style_config.letter_spacing != 0:
-                text = f"{{\\fsp{style_config.letter_spacing}}}{text}"
-
-            event = pysubs2.SSAEvent(
-                start=pysubs2.make_time(s=word_start),
-                end=pysubs2.make_time(s=event_end),
-                text=text,
-                style=style_name,
-            )
-            subs.events.append(event)
+                subs.events.append(pysubs2.SSAEvent(
+                    start=pysubs2.make_time(s=word_start),
+                    end=pysubs2.make_time(s=event_end),
+                    text=text,
+                    style=style_name,
+                ))
 
     # ------------------------------------------------------------------
     # Save
