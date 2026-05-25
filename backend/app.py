@@ -276,7 +276,7 @@ def _start_processing_thread(app: Flask, job_id: str) -> None:
                 # Import here to avoid heavy deps at startup
                 from caption_job import process_caption_job
 
-            process_caption_job(
+                process_caption_job(
                     storage,
                     job_id,
                     job["video_path"],
