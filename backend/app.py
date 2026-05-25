@@ -112,6 +112,7 @@ def create_app(testing: bool = False) -> Flask:
             return jsonify({"error": f"Invalid captionStyle '{caption_style}'"}), 400
 
         # --- Validate captionPosition ---
+        initial_prompt = request.form.get("initialPrompt") or None
         caption_position_raw = request.form.get("captionPosition", "")
         try:
             caption_position = int(caption_position_raw)
@@ -275,13 +276,14 @@ def _start_processing_thread(app: Flask, job_id: str) -> None:
                 # Import here to avoid heavy deps at startup
                 from caption_job import process_caption_job
 
-                process_caption_job(
+            process_caption_job(
                     storage,
                     job_id,
                     job["video_path"],
                     job["caption_style"],
                     job["caption_position"],
                     data_dir,
+                    initial_prompt=job.get("initial_prompt"),
                 )
             except Exception as exc:  # noqa: BLE001
                 storage.update_status(job_id, status="failed", error=str(exc))
