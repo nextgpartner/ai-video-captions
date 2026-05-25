@@ -224,6 +224,19 @@ def process_caption_job(
         # Phase 2: transcribe
         # ------------------------------------------------------------------
         transcript = transcribe_audio(video_path, initial_prompt=initial_prompt)
+        # Korekty słów z zmiennej środowiskowej
+        corrections_raw = os.environ.get("WHISPER_CORRECTIONS", "")
+        if corrections_raw:
+            corrections = {}
+            for pair in corrections_raw.split(","):
+                if ":" in pair:
+                    wrong, correct = pair.strip().split(":", 1)
+                    corrections[wrong.strip().lower()] = correct.strip()
+            for segment in transcript.get("segments", []):
+                for word in segment.get("words", []):
+                    w = word["word"].strip()
+                    if w.lower() in corrections:
+                        word["word"] = word["word"].replace(w, corrections[w.lower()])
         language = transcript.get("language", "en")
         storage.update_status(job_id, language=language, progress=40)
 
