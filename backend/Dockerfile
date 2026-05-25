@@ -19,6 +19,8 @@ RUN mkdir -p /usr/share/fonts/truetype/captions && \
         -O /usr/share/fonts/truetype/captions/BebasNeue-Regular.ttf || true && \
     wget -q "https://raw.githubusercontent.com/google/fonts/main/ofl/ibmplexsans/IBMPlexSans-Bold.ttf" \
         -O /usr/share/fonts/truetype/captions/IBMPlexSans-Bold.ttf || true && \
+    wget -q "https://raw.githubusercontent.com/google/fonts/main/ofl/montserrat/static/Montserrat-Black.ttf" \
+        -O /usr/share/fonts/truetype/captions/Montserrat-Black.ttf || true && \
     fc-cache -fv
 
 WORKDIR /app
