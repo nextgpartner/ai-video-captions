@@ -34,7 +34,7 @@ class JobStorage:
     # Public API
     # ------------------------------------------------------------------
 
-def create_job(
+    def create_job(
         self,
         video_path: str,
         caption_style: str,
