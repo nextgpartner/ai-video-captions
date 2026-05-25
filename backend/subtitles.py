@@ -151,7 +151,9 @@ def generate_ass(
         # Jeśli pauza > 0.5s między słowami — zacznij nową grupę
             GAP_THRESHOLD = 0.5
             prev_end = current_lines[-1][-1][2] if current_lines and current_lines[-1] else 0
-            if start_rel - prev_end > GAP_THRESHOLD and any(current_lines):
+            prev_word_text = current_lines[-1][-1][0] if current_lines and current_lines[-1] else ""
+            sentence_boundary = prev_word_text.endswith(('.', '!', '?', '…'))
+            if (start_rel - prev_end > GAP_THRESHOLD or sentence_boundary) and any(current_lines):
                 flattened_words = []
                 for line_idx_f, line_f in enumerate(current_lines):
                     for word_tuple_f in line_f:
