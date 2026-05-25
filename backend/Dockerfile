@@ -21,6 +21,8 @@ RUN mkdir -p /usr/share/fonts/truetype/captions && \
         -O /usr/share/fonts/truetype/captions/IBMPlexSans-Bold.ttf || true && \
     wget -q "https://raw.githubusercontent.com/google/fonts/main/ofl/montserrat/static/Montserrat-Black.ttf" \
         -O /usr/share/fonts/truetype/captions/Montserrat-Black.ttf || true && \
+    wget -q "https://raw.githubusercontent.com/google/fonts/main/ofl/montserrat/static/Montserrat-ExtraBold.ttf" \
+        -O /usr/share/fonts/truetype/captions/Montserrat-ExtraBold.ttf || true && \
     fc-cache -fv
 
 WORKDIR /app
