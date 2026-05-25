@@ -34,13 +34,14 @@ class JobStorage:
     # Public API
     # ------------------------------------------------------------------
 
-    def create_job(
+def create_job(
         self,
         video_path: str,
         caption_style: str,
         caption_position: int,
         original_filename: str,
         file_size: int,
+        initial_prompt: str | None = None,
     ) -> str:
         """Create a new job and return its UUID."""
         job_id = str(uuid.uuid4())
@@ -60,6 +61,7 @@ class JobStorage:
             "error_message": None,
             "output_path": None,
             "processing_time_ms": None,
+            "initial_prompt": initial_prompt,
             "created_at": now,
             "updated_at": now,
         }
