@@ -147,6 +147,21 @@ def generate_ass(
 
             # Calculate characters if we add this word (including space)
             chars_with_word = current_chars + (1 if current_line else 0) + word_length
+            
+        # Jeśli pauza > 0.5s między słowami — zacznij nową grupę
+            GAP_THRESHOLD = 0.5
+            prev_end = current_lines[-1][-1][2] if current_lines and current_lines[-1] else 0
+            if start_rel - prev_end > GAP_THRESHOLD and any(current_lines):
+                flattened_words = []
+                for line_idx_f, line_f in enumerate(current_lines):
+                    for word_tuple_f in line_f:
+                        flattened_words.append(word_tuple_f + (line_idx_f,))
+                subtitles.append((current_start, current_end, flattened_words))
+                current_start = start_rel
+                current_end = end_rel
+                current_lines = [[(word, start_rel, end_rel)]]
+                current_line_chars = [word_length]
+                continue
 
             if chars_with_word <= max_chars_per_line:
                 # Word fits on current line
