@@ -248,7 +248,7 @@ def generate_ass(
     # Generate per-word subtitle events
     # ------------------------------------------------------------------
     scaled_font_size = int(style_config.font_size * font_scale * dimension_scale)
-    line_height = int(scaled_font_size * 1.05)  # ciaśniejszy odstęp niż domyślny \N (~1.2x)
+    line_height = int(scaled_font_size * 0.85)  # ciaśniejszy odstęp niż domyślny \N (~1.2x)
     cx = play_res_x // 2
     bottom_y = play_res_y - new_style.marginv
 
