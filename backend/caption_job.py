@@ -70,19 +70,27 @@ def transcribe_audio(video_path: str) -> dict:
     """Transcribe *video_path* using faster-whisper with word-level timestamps.
 
     Returns a dict with keys:
-        language  (str)   – detected language code, e.g. "en"
+        language  (str)   – detected language code, e.g. "pl"
         segments  (list)  – list of segment dicts, each containing:
             start, end, text, words (list of word dicts with start/end/word)
 
     The model size is controlled by the ``WHISPER_MODEL_SIZE`` environment
     variable (default: "base").
     """
-    # Import here so tests can mock at the module level without importing
-    # faster-whisper at module load time (it is a heavy optional dependency).
     from faster_whisper import WhisperModel  # type: ignore[import]
 
     model = WhisperModel(_WHISPER_MODEL_SIZE, compute_type="int8")
-    segments_iter, info = model.transcribe(video_path, word_timestamps=True)
+    segments_iter, info = model.transcribe(
+        video_path,
+        language="pl",
+        word_timestamps=True,
+        beam_size=5,
+        vad_filter=True,
+        vad_parameters={
+            "min_silence_duration_ms": 500,
+        },
+        condition_on_previous_text=True,
+    )
 
     segments = []
     for seg in segments_iter:
