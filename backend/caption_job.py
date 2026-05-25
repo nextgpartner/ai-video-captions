@@ -66,7 +66,7 @@ def probe_video(video_path: str) -> tuple[int, int, float]:
     return width, height, duration
 
 
-def transcribe_audio(video_path: str) -> dict:
+def transcribe_audio(video_path: str, initial_prompt: str | None = None) -> dict:
     """Transcribe *video_path* using faster-whisper with word-level timestamps.
 
     Returns a dict with keys:
@@ -90,6 +90,7 @@ def transcribe_audio(video_path: str) -> dict:
             "min_silence_duration_ms": 500,
         },
         condition_on_previous_text=True,
+        initial_prompt=initial_prompt or None,
     )
 
     segments = []
@@ -184,6 +185,7 @@ def process_caption_job(
     caption_style: str,
     caption_position: int,
     data_dir: str,
+    initial_prompt: str | None = None,
 ) -> None:
     """Run the full captioning pipeline for a job.
 
@@ -221,7 +223,7 @@ def process_caption_job(
         # ------------------------------------------------------------------
         # Phase 2: transcribe
         # ------------------------------------------------------------------
-        transcript = transcribe_audio(video_path)
+        transcript = transcribe_audio(video_path, initial_prompt=initial_prompt)
         language = transcript.get("language", "en")
         storage.update_status(job_id, language=language, progress=40)
 
